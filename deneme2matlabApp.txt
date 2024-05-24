@@ -1,0 +1,177 @@
+classdef deneme2 < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                matlab.ui.Figure
+        WindSpeedLabel          matlab.ui.control.Label
+        HumidityLabel           matlab.ui.control.Label
+        TemperatureLabel        matlab.ui.control.Label
+        AddCityButton           matlab.ui.control.Button
+        CityNamesDropDown       matlab.ui.control.DropDown
+        CityNamesDropDownLabel  matlab.ui.control.Label
+        EditField               matlab.ui.control.EditField
+        GetInformationButton    matlab.ui.control.Button
+        WindSpeedAxis           matlab.ui.control.UIAxes
+        HumidityAxis            matlab.ui.control.UIAxes
+        TempAxis                matlab.ui.control.UIAxes
+    end
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Callback function: AddCityButton, EditField
+        function AddCityButtonPushed(app, event)
+            %Get the new city name from the edit field
+            newCityName = app.EditField.Value;
+
+            %Ensure the new city name is a cell array
+            newCityNameCell = {newCityName};
+
+            %Add the new city to the dropdown menu
+            app.CityNamesDropDown.Items = [app.CityNamesDropDown.Items, newCityNameCell];
+
+            %Select the new city in the dropdown menu
+            app.CityNamesDropDown.Value = newCityName;
+        end
+
+        % Button pushed function: GetInformationButton
+        function GetInformationButtonPushed(app, event)
+           % Get the selected city and API key
+            cityName = app.CityNamesDropDown.Value;
+            apiKey = '0de2ef6646e30c5a61a344c227981893';
+
+            % Retrieve the weather data for the selected city
+            weatherData = fetchFiveDayForecast(cityName, apiKey);
+
+            % Update the temperature graph
+            plot(app.TempAxis, weatherData.timestamps, weatherData.temperature, '-o');
+            title(app.TempAxis, ['Temperature in ', cityName]);
+            xlabel(app.TempAxis, 'Date');
+            ylabel(app.TempAxis, 'Temperature (°C)');
+
+            % Update the humidity graph
+            plot(app.HumidityAxis, weatherData.timestamps, weatherData.humidity, '-o');
+            title(app.HumidityAxis, ['Humidity in ', cityName]);
+            xlabel(app.HumidityAxis, 'Date');
+            ylabel(app.HumidityAxis, 'Humidity (%)');
+
+            % Update the wind speed graph
+            plot(app.WindSpeedAxis, weatherData.timestamps, weatherData.wind_speed, '-o');
+            title(app.WindSpeedAxis, ['Wind Speed in ', cityName]);
+            xlabel(app.WindSpeedAxis, 'Date');
+            ylabel(app.WindSpeedAxis, 'Wind Speed (m/s)');
+
+            % Update the current conditions display
+            currentConditions = sprintf('Temperature: %.1f°C\nHumidity: %d%%\nWind Speed: %.1f m/s', weatherData.temperature(1), weatherData.humidity(1), weatherData.wind_speed(1));
+            app.CityNamesLabel.Text = {'Selected City: ', cityName};
+            app.CurrentConditionsText.Value = currentConditions;
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Position = [100 100 1014 567];
+            app.UIFigure.Name = 'MATLAB App';
+
+            % Create TempAxis
+            app.TempAxis = uiaxes(app.UIFigure);
+            title(app.TempAxis, 'Temperature')
+            xlabel(app.TempAxis, 'Date')
+            ylabel(app.TempAxis, 'Temperature (°C)')
+            app.TempAxis.Position = [19 373 300 185];
+
+            % Create HumidityAxis
+            app.HumidityAxis = uiaxes(app.UIFigure);
+            title(app.HumidityAxis, 'Humidity')
+            xlabel(app.HumidityAxis, 'Date')
+            ylabel(app.HumidityAxis, 'Humidity (%)')
+            app.HumidityAxis.Position = [371 373 300 185];
+
+            % Create WindSpeedAxis
+            app.WindSpeedAxis = uiaxes(app.UIFigure);
+            title(app.WindSpeedAxis, 'Wind Speed')
+            xlabel(app.WindSpeedAxis, 'Date')
+            ylabel(app.WindSpeedAxis, 'Wind Speed (m/s)')
+            app.WindSpeedAxis.Position = [701 373 300 185];
+
+            % Create GetInformationButton
+            app.GetInformationButton = uibutton(app.UIFigure, 'push');
+            app.GetInformationButton.ButtonPushedFcn = createCallbackFcn(app, @GetInformationButtonPushed, true);
+            app.GetInformationButton.Position = [421 106 100 23];
+            app.GetInformationButton.Text = 'Get Information';
+
+            % Create EditField
+            app.EditField = uieditfield(app.UIFigure, 'text');
+            app.EditField.ValueChangedFcn = createCallbackFcn(app, @AddCityButtonPushed, true);
+            app.EditField.Position = [195 205 100 22];
+            app.EditField.Value = 'City Name';
+
+            % Create CityNamesDropDownLabel
+            app.CityNamesDropDownLabel = uilabel(app.UIFigure);
+            app.CityNamesDropDownLabel.HorizontalAlignment = 'right';
+            app.CityNamesDropDownLabel.Position = [574 205 67 22];
+            app.CityNamesDropDownLabel.Text = 'City Names';
+
+            % Create CityNamesDropDown
+            app.CityNamesDropDown = uidropdown(app.UIFigure);
+            app.CityNamesDropDown.Items = {};
+            app.CityNamesDropDown.Position = [656 205 100 22];
+            app.CityNamesDropDown.Value = {};
+
+            % Create AddCityButton
+            app.AddCityButton = uibutton(app.UIFigure, 'push');
+            app.AddCityButton.ButtonPushedFcn = createCallbackFcn(app, @AddCityButtonPushed, true);
+            app.AddCityButton.Position = [308 205 100 23];
+            app.AddCityButton.Text = 'Add City';
+
+            % Create TemperatureLabel
+            app.TemperatureLabel = uilabel(app.UIFigure);
+            app.TemperatureLabel.Position = [152 273 72 22];
+            app.TemperatureLabel.Text = 'Temperature';
+
+            % Create HumidityLabel
+            app.HumidityLabel = uilabel(app.UIFigure);
+            app.HumidityLabel.Position = [433 273 55 22];
+            app.HumidityLabel.Text = 'Humidity';
+
+            % Create WindSpeedLabel
+            app.WindSpeedLabel = uilabel(app.UIFigure);
+            app.WindSpeedLabel.Position = [715 273 70 22];
+            app.WindSpeedLabel.Text = 'Wind Speed';
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = deneme2
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
