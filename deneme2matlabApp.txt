@@ -16,55 +16,68 @@ classdef deneme2 < matlab.apps.AppBase
         TempAxis                matlab.ui.control.UIAxes
     end
 
+
+    
+
     % Callbacks that handle component events
     methods (Access = private)
 
         % Callback function: AddCityButton, EditField
         function AddCityButtonPushed(app, event)
-            %Get the new city name from the edit field
-            newCityName = app.EditField.Value;
+            % Get the new city name from the edit field
+    newCityName = app.EditField.Value;
 
-            %Ensure the new city name is a cell array
-            newCityNameCell = {newCityName};
+    % Ensure the new city name is not already in the dropdown menu
+    if ~any(strcmp(app.CityNamesDropDown.Items, newCityName))
+        % Add the new city to the dropdown menu
+        app.CityNamesDropDown.Items = [app.CityNamesDropDown.Items, newCityName];
 
-            %Add the new city to the dropdown menu
-            app.CityNamesDropDown.Items = [app.CityNamesDropDown.Items, newCityNameCell];
+        % Select the new city in the dropdown menu
+        app.CityNamesDropDown.Value = newCityName;
+    end
 
-            %Select the new city in the dropdown menu
-            app.CityNamesDropDown.Value = newCityName;
         end
 
         % Button pushed function: GetInformationButton
         function GetInformationButtonPushed(app, event)
-           % Get the selected city and API key
-            cityName = app.CityNamesDropDown.Value;
-            apiKey = '0de2ef6646e30c5a61a344c227981893';
 
-            % Retrieve the weather data for the selected city
-            weatherData = fetchFiveDayForecast(cityName, apiKey);
+    % Get the selected city and API key
+    cityName = app.CityNamesDropDown.Value;
+    apiKey = '0de2ef6646e30c5a61a344c227981893';
 
-            % Update the temperature graph
-            plot(app.TempAxis, weatherData.timestamps, weatherData.temperature, '-o');
-            title(app.TempAxis, ['Temperature in ', cityName]);
-            xlabel(app.TempAxis, 'Date');
-            ylabel(app.TempAxis, 'Temperature (°C)');
+    % Retrieve the weather data for the selected city
+    weatherData = fetchFiveDayForecast(cityName, apiKey);
 
-            % Update the humidity graph
-            plot(app.HumidityAxis, weatherData.timestamps, weatherData.humidity, '-o');
-            title(app.HumidityAxis, ['Humidity in ', cityName]);
-            xlabel(app.HumidityAxis, 'Date');
-            ylabel(app.HumidityAxis, 'Humidity (%)');
+    % Update the temperature graph
+    plot(app.TempAxis, weatherData.timestamps, weatherData.temperature, '-o');
+    title(app.TempAxis, ['Temperature in ', cityName]);
+    xlabel(app.TempAxis, 'Date');
+    ylabel(app.TempAxis, 'Temperature (°C)');
 
-            % Update the wind speed graph
-            plot(app.WindSpeedAxis, weatherData.timestamps, weatherData.wind_speed, '-o');
-            title(app.WindSpeedAxis, ['Wind Speed in ', cityName]);
-            xlabel(app.WindSpeedAxis, 'Date');
-            ylabel(app.WindSpeedAxis, 'Wind Speed (m/s)');
+    % Update the humidity graph
+    plot(app.HumidityAxis, weatherData.timestamps, weatherData.humidity, '-o');
+    title(app.HumidityAxis, ['Humidity in ', cityName]);
+    xlabel(app.HumidityAxis, 'Date');
+    ylabel(app.HumidityAxis, 'Humidity (%)');
 
-            % Update the current conditions display
-            currentConditions = sprintf('Temperature: %.1f°C\nHumidity: %d%%\nWind Speed: %.1f m/s', weatherData.temperature(1), weatherData.humidity(1), weatherData.wind_speed(1));
-            app.CityNamesLabel.Text = {'Selected City: ', cityName};
-            app.CurrentConditionsText.Value = currentConditions;
+    % Update the wind speed graph
+    plot(app.WindSpeedAxis, weatherData.timestamps, weatherData.wind_speed, '-o');
+    title(app.WindSpeedAxis, ['Wind Speed in ', cityName]);
+    xlabel(app.WindSpeedAxis, 'Date');
+    ylabel(app.WindSpeedAxis, 'Wind Speed (m/s)');
+
+    % Update current condition labels
+    currTemp = weatherData.temperature(1);
+    currHum = weatherData.humidity(1);
+    currWind = weatherData.wind_speed(1);
+
+    app.TemperatureLabel.Text = sprintf('Temperature: %.1f°C', currTemp);
+    app.WindSpeedLabel.Text = sprintf('Wind Speed: %.1f m/s', currWind);
+    app.HumidityLabel.Text = sprintf('Humidity: %d%%', currHum);
+    %app.CityNamesLabel.Text = ['Selected City: ', cityName];
+
+ 
+        
         end
     end
 
@@ -120,9 +133,8 @@ classdef deneme2 < matlab.apps.AppBase
 
             % Create CityNamesDropDown
             app.CityNamesDropDown = uidropdown(app.UIFigure);
-            app.CityNamesDropDown.Items = {};
+            app.CityNamesDropDown.Items = {'Option 1', 'Option 2', 'Option 3'};
             app.CityNamesDropDown.Position = [656 205 100 22];
-            app.CityNamesDropDown.Value = {};
 
             % Create AddCityButton
             app.AddCityButton = uibutton(app.UIFigure, 'push');
@@ -132,18 +144,18 @@ classdef deneme2 < matlab.apps.AppBase
 
             % Create TemperatureLabel
             app.TemperatureLabel = uilabel(app.UIFigure);
-            app.TemperatureLabel.Position = [152 273 72 22];
-            app.TemperatureLabel.Text = 'Temperature';
+            app.TemperatureLabel.Position = [96 261 161 34];
+            app.TemperatureLabel.Text = 'Temperature:';
 
             % Create HumidityLabel
             app.HumidityLabel = uilabel(app.UIFigure);
-            app.HumidityLabel.Position = [433 273 55 22];
-            app.HumidityLabel.Text = 'Humidity';
+            app.HumidityLabel.Position = [433 261 159 34];
+            app.HumidityLabel.Text = 'Humidity:';
 
             % Create WindSpeedLabel
             app.WindSpeedLabel = uilabel(app.UIFigure);
-            app.WindSpeedLabel.Position = [715 273 70 22];
-            app.WindSpeedLabel.Text = 'Wind Speed';
+            app.WindSpeedLabel.Position = [715 251 166 44];
+            app.WindSpeedLabel.Text = 'Wind Speed:';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
